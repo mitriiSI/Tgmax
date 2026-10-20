@@ -1,0 +1,63 @@
+TELEGRAM ↔ MAX 2.0 — НАСТРОЙКА ФАЙЛОВ ДО 2000 МБ
+
+ЧТО КОПИРОВАТЬ С MY.TELEGRAM.ORG
+Нужны только два значения:
+1) App api_id — только цифры.
+2) App api_hash — длинная строка из букв и цифр.
+
+Test configuration, Production configuration и Public keys копировать не нужно.
+API_HASH не отправляй другим людям и не публикуй.
+
+КУДА ВСТАВЛЯТЬ
+1. Открой папку telegram-max-bridge.
+2. Открой файл .env обычным Блокнотом.
+3. В конец файла добавь без кавычек и пробелов вокруг знака =:
+
+TELEGRAM_API_ID=12345678
+TELEGRAM_API_HASH=0123456789abcdef0123456789abcdef
+
+Вместо примеров вставь свои значения.
+Остальные строки с TELEGRAM_BOT_TOKEN, MAX_BOT_TOKEN, PAIRING_CODE не меняй.
+Для всех пользователей одного сервера используется одна пара API_ID/API_HASH.
+
+ПЕРВЫЙ ЗАПУСК
+1. Запусти Docker Desktop и дождись, пока он полностью загрузится.
+2. Один раз запусти large-files-first-start.cmd.
+3. Не запускай этот файл повторно без необходимости: он отключает бота от облачного Bot API и переключает на локальный.
+
+ПОСЛЕДУЮЩИЕ ЗАПУСКИ
+Запускай large-files-start.cmd.
+
+РУЧНЫЕ КОМАНДЫ POWERSHELL
+Первый запуск:
+
+docker compose -f compose.yaml -f compose.large-files.yaml up -d telegram-bot-api
+docker compose -f compose.yaml -f compose.large-files.yaml run --rm --build bridge npm run telegram:logout-cloud
+docker compose -f compose.yaml -f compose.large-files.yaml up -d --build
+
+Обычный запуск:
+
+docker compose -f compose.yaml -f compose.large-files.yaml up -d --build
+
+Остановка:
+
+docker compose -f compose.yaml -f compose.large-files.yaml down
+
+ПРОВЕРКА
+Открой в браузере:
+http://127.0.0.1:8080/health
+
+Должно быть:
+"largeFileMode": true
+"streamingMedia": true
+telegramDownloadMb: 2000
+telegramUploadMb: 2000
+
+Если API_ID или API_HASH указаны неверно, контейнер telegram-bot-api не запустится. Проверка:
+
+docker compose -f compose.yaml -f compose.large-files.yaml logs --tail=100 telegram-bot-api
+
+ВАЖНО
+- .env и папку data при обновлении не удалять.
+- Обычная команда docker compose up включает облачный режим и старые лимиты.
+- Для большого файла на диске должно быть место под сам файл плюс резерв около 1 ГБ.
