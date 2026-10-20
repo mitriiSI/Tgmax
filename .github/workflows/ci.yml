@@ -1,0 +1,99 @@
+name: CI
+on:
+  push:
+    branches: [main, 'import/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    name: Tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Check JavaScript syntax
+        run: rg --files src test -g '*.js' -0 | xargs -0 -n1 node --check
+      - name: Run all tests
+        run: npm test
+
+  docker:
+    name: Docker build and startup
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate both Compose configurations
+        env:
+          TELEGRAM_API_ID: '123456'
+          TELEGRAM_API_HASH: '0123456789abcdef0123456789abcdef'
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          docker compose -f compose.yaml -f compose.large-files.yaml config --quiet
+      - name: Build production image
+        run: docker build --tag tgmax:ci .
+      - name: Start without access to external bot APIs
+        run: |
+          docker run --detach --name tgmax-smoke --network none \
+            -e TELEGRAM_BOT_TOKEN=ci-telegram-token \
+            -e MAX_BOT_TOKEN=ci-max-token \
+            -e PAIRING_CODE=ci-registration-code \
+            -e PANEL_TOKEN=ci-separate-admin-password \
+            -e DATA_DIR=/tmp/tgmax-data \
+            -e NETWORK_SPEED_TEST_ON_START=false \
+            tgmax:ci
+          for attempt in $(seq 1 30); do
+            if docker exec tgmax-smoke node -e 'fetch("http://127.0.0.1:8080/health").then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))'; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs tgmax-smoke
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Verify health, UI, assets and authentication
+        run: |
+          docker exec -i tgmax-smoke node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base = 'http://127.0.0.1:8080';
+          const healthResponse = await fetch(base + '/health');
+          assert.equal(healthResponse.status, 200);
+          const health = await healthResponse.json();
+          assert.equal(health.ok, true);
+          assert.equal(health.consoleEnabled, true);
+          assert.equal(health.largeFileMode, false);
+          for (const path of ['/console', '/miniapp', '/assets/wallpaper-dark.jpg', '/assets/wallpaper-light.jpg']) {
+            const response = await fetch(base + path);
+            assert.equal(response.status, 200, path);
+            assert.ok((await response.arrayBuffer()).byteLength > 0, path);
+          }
+          const denied = await fetch(base + '/api/accounts');
+          assert.equal(denied.status, 401);
+          const allowed = await fetch(base + '/api/accounts', {
+            headers: { 'x-panel-token': 'ci-separate-admin-password' }
+          });
+          assert.equal(allowed.status, 200);
+          assert.ok(Array.isArray((await allowed.json()).accounts));
+          console.log('Startup smoke passed: health, both UIs, assets and panel authentication.');
+          JS
+      - name: Stop smoke container
+        if: always()
+        run: docker rm --force tgmax-smoke 2>/dev/null || true
