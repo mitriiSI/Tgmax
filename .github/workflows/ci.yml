@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
   test:
     name: Tests (Node ${{ matrix.node }})
@@ -16,19 +19,27 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      - name: Install media test dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
       - name: Check JavaScript syntax
-        run: rg --files src test -g '*.js' -0 | xargs -0 -n1 node --check
+        run: find src test -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run all tests
         run: npm test
+      - name: Report dependency security status
+        if: matrix.node == 22
+        continue-on-error: true
+        run: npm audit --omit=dev --json
 
   docker:
     name: Docker build and startup
@@ -36,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
       - name: Validate both Compose configurations
