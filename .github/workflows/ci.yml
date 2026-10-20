@@ -36,10 +36,9 @@ jobs:
         run: find src test -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run all tests
         run: npm test
-      - name: Report dependency security status
+      - name: Audit dependencies
         if: matrix.node == 22
-        continue-on-error: true
-        run: npm audit --omit=dev --json
+        run: npm audit --omit=dev --audit-level=high
 
   docker:
     name: Docker build and startup
@@ -58,6 +57,8 @@ jobs:
           cp .env.example .env
           docker compose config --quiet
           docker compose -f compose.yaml -f compose.large-files.yaml config --quiet
+      - name: Verify local Telegram API image is available
+        run: docker manifest inspect aiogram/telegram-bot-api:10.1 > /dev/null
       - name: Build production image
         run: docker build --tag tgmax:ci .
       - name: Start without access to external bot APIs

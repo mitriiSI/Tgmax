@@ -1,5 +1,105 @@
 # Telegram ↔ MAX Bridge 2.2.0
 
+[![CI](https://github.com/mitriiSI/Tgmax/actions/workflows/ci.yml/badge.svg)](https://github.com/mitriiSI/Tgmax/actions/workflows/ci.yml)
+
+Мост между Telegram Business и MAX: передаёт сообщения и файлы в обе стороны, хранит отдельные профили пользователей и пересылает публикации публичных Telegram-каналов в MAX.
+
+## Первый запуск на Windows
+
+Нужен запущенный Docker Desktop и токены двух ботов: Telegram и MAX. Node.js и FFmpeg отдельно устанавливать не требуется — они входят в Docker-образ.
+
+1. Скачай проект через **Code → Download ZIP** или выполни `git clone https://github.com/mitriiSI/Tgmax.git`.
+2. Распакуй архив. Открой PowerShell в папке, где лежит `compose.yaml`.
+3. Создай настройки:
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Заполни четыре строки:
+
+| Переменная | Что указать |
+| --- | --- |
+| `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота от @BotFather |
+| `MAX_BOT_TOKEN` | Токен MAX-бота |
+| `PAIRING_CODE` | Придуманный код регистрации, минимум 12 символов |
+| `PANEL_TOKEN` | Другой пароль администратора, минимум 12 символов |
+
+Замени оба значения `replace-with-...` своими кодами. Не публикуй `.env`; токены остаются на компьютере, где работает мост.
+
+4. Запусти:
+
+```powershell
+docker compose up -d --build
+```
+
+5. Открой [проверку сервера](http://127.0.0.1:8080/health) — должно быть `"ok": true`. Затем открой [Bridge Console](http://127.0.0.1:8080/console) и введи `PANEL_TOKEN`.
+
+Обычный режим использует облачный Telegram Bot API: скачивание до 20 МБ, отправка до 50 МБ. Для режима до 2000 МБ смотри следующий раздел.
+
+Исходники и автоматические проверки находятся на GitHub. Сам мост работает на твоём компьютере или сервере; для пересылки нужны включённый компьютер и доступ к Telegram/MAX.
+
+## Связать Telegram и MAX
+
+1. В @BotFather включи **Business Mode** для основного Telegram-бота.
+2. В личном чате с этим ботом отправь `/bind ТВОЙ_PAIRING_CODE`.
+3. Бот выдаст личную команду `/bind ЛИЧНЫЙ_КОД`. Отправь её основному MAX-боту.
+4. В настройках Telegram открой **Telegram для бизнеса → Чат-боты**, подключи основного Telegram-бота, выбери нужные личные чаты и разреши ответы.
+5. Проверь пересылку: входящее сообщение в Telegram должно появиться в MAX; ответ реплаем в MAX должен вернуться в нужный Telegram-чат.
+
+Для каждого следующего человека порядок тот же; ему не нужны собственные боты или доступ к `.env`. Подробности: [подключение пользователей](./ПОДКЛЮЧЕНИЕ-ПОЛЬЗОВАТЕЛЕЙ.txt).
+
+## Файлы до 2000 МБ
+
+В `.env` дополнительно заполни `TELEGRAM_API_ID` и `TELEGRAM_API_HASH` со страницы [my.telegram.org/apps](https://my.telegram.org/apps).
+
+Первый переход с облачного Bot API на локальный:
+
+```powershell
+.\large-files-first-start.cmd
+```
+
+Последующие запуски:
+
+```powershell
+.\large-files-start.cmd
+```
+
+На странице `/health` должны быть `"largeFileMode": true` и лимиты 2000 МБ в `limits`. Подробности: [настройка больших файлов](./НАСТРОЙКА-2ГБ.txt).
+
+## Остановка и диагностика
+
+Обычный режим:
+
+```powershell
+docker compose logs --tail=100
+docker compose down
+```
+
+Режим больших файлов:
+
+```powershell
+docker compose -f compose.yaml -f compose.large-files.yaml logs --tail=100
+docker compose -f compose.yaml -f compose.large-files.yaml down
+```
+
+Перед обновлением сохрани `.env` и папку `data`. Логи могут содержать сведения о сообщениях; перед публикацией проверь их содержимое.
+
+## Проверки для разработчика
+
+Нужны Node.js 22 или новее, FFmpeg/ffprobe и zip в PATH.
+
+```sh
+npm ci
+npm test
+```
+
+CI запускает все тесты на Node.js 22 и 24, проверяет синтаксис, собирает Docker-образ и проверяет запуск сервера, интерфейсы и авторизацию панели в контейнере без внешней сети.
+
+Для запуска через `npm start` вне Docker замени `DATA_DIR=/app/data` в локальном `.env` на `DATA_DIR=./data`.
+
+
 ## Что исправлено в 2.2.0
 
 - Видео из MAX размером больше 20 МБ отправляется в Telegram исходным файлом без перекодирования, обрезки, поворота и изменения соотношения сторон.
