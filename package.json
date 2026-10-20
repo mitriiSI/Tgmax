@@ -1,0 +1,24 @@
+{
+  "name": "telegram-max-bridge",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal two-way Telegram Business ↔ MAX bridge",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "telegram:logout-cloud": "node src/logout-cloud-telegram.js",
+    "test": "node --test",
+    "test:core": "node --test test/account-pairing.test.js test/censor.test.js test/config.test.js test/database.test.js test/max-poller.test.js test/media.test.js test/multipart.test.js test/telegram-api.test.js test/telegram-poller.test.js test/text.test.js test/web-media.test.js test/stress-multi-user.test.js test/onboarding-multi-user.test.js test/event-store.test.js test/console-assets.test.js test/network-monitor.test.js test/channel-relay-manager.test.js",
+    "test:console": "node --test test/event-store.test.js"
+  },
+  "dependencies": {
+    "@fastify/multipart": "^9.4.0",
+    "@maxhub/max-bot-api": "0.2.5",
+    "dotenv": "17.4.2",
+    "fastify": "5.12.7"
+  }
+}

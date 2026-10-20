@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bridge Console 2.2.0</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#06090f;--panel:#0d1420;--panel2:#131e2e;--panel3:#1a2940;
+  --line:#52657e;--line2:#2d4058;--text:#f7fbff;--muted:#c0ccda;
+  --ok:#61e7a8;--warn:#ffd166;--bad:#ff7b89;--info:#79c0ff;--purple:#c3a7ff;
+  --focus:#ffdf6e;--button:#263d5a;--button-hover:#35577f;--primary:#ffd35a;--primary-text:#111827;
+  --shadow:0 18px 52px #000a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(135deg,#08101d,#06090f 55%);font:15px/1.48 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text)}
+button,input,select{font:inherit;font-size:14px}
+button,input,select{min-height:42px;border:2px solid var(--line);border-radius:9px;padding:9px 12px;outline:none}
+input,select{background:#16263a;color:#ffffff}
+select option{background:#101b2a;color:#ffffff}
+button{background:var(--button);color:var(--text);font-weight:700;cursor:pointer}
+button:hover{background:var(--button-hover)}
+button.primary{background:var(--primary);color:var(--primary-text);border-color:#fff0aa;text-shadow:none}
+button.danger{background:#7b2433;border-color:#ff9aaa;color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button:disabled{opacity:.55;cursor:wait}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100vh}
+.top{display:flex;align-items:center;gap:14px;padding:14px 18px;background:#09111ded;border-bottom:2px solid var(--line2);backdrop-filter:blur(14px)}
+.logo{font:800 20px/1.1 system-ui,sans-serif}.version{color:var(--muted);font-size:13px;margin-top:4px}.status{display:flex;align-items:center;gap:9px;margin-left:auto;font-weight:700}.dot{width:11px;height:11px;border-radius:50%;background:var(--bad);box-shadow:0 0 14px currentColor}.dot.online{background:var(--ok)}
+.controls{display:grid;grid-template-columns:minmax(220px,1fr) 150px 180px 190px auto auto auto;gap:9px;padding:11px 18px;background:var(--panel);border-bottom:2px solid var(--line2)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 410px;min-height:0}.terminal{overflow:auto;padding:12px 18px 70px}.event{display:grid;grid-template-columns:112px 64px 128px 155px minmax(240px,1fr);gap:9px;padding:8px;border-bottom:1px solid var(--line2);align-items:start}.event:hover{background:#132035}.time{color:#b9c7d8}.level{font-weight:900}.level.info{color:var(--info)}.level.warn{color:var(--warn)}.level.error{color:var(--bad)}.level.debug{color:var(--purple)}.category{color:#b7dcff}.account{overflow:hidden;text-overflow:ellipsis;color:#d7e1ed}.msg{white-space:pre-wrap;word-break:break-word}.details{grid-column:5;color:#d5dfeb;font-size:12px;white-space:pre-wrap;display:none;background:#080d15;border:1px solid var(--line2);padding:10px;border-radius:8px}.event.open .details{display:block}
+.side{border-left:2px solid var(--line2);background:#080e18;overflow:auto;padding:14px}.card{background:var(--panel);border:2px solid var(--line2);border-radius:13px;padding:14px;margin-bottom:13px;box-shadow:var(--shadow)}.card h3{margin:0 0 11px;font:800 14px system-ui,sans-serif;color:#fff}.grid{display:grid;grid-template-columns:1fr auto;gap:8px;color:var(--muted)}.grid b{color:var(--text)}.op{padding:11px;border:2px solid var(--line2);border-radius:9px;margin-top:9px;background:#101a29}.opline{display:flex;justify-content:space-between;gap:8px}.op small{display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis}.bar{height:9px;background:#26364c;border-radius:20px;margin-top:8px;overflow:hidden;border:1px solid #476079}.bar i{display:block;height:100%;background:linear-gradient(90deg,#5bbdff,#62eca7);transition:width .35s ease}.opmeta{font-size:12px;color:#d1deeb;margin-top:6px}.empty{color:var(--muted);padding:40px;text-align:center}.auth{position:fixed;inset:0;background:#03060bea;display:grid;place-items:center;z-index:5}.authbox{width:min(460px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:25px;box-shadow:var(--shadow)}.authbox h1{font:800 23px system-ui;margin:0 0 8px}.authbox p{color:var(--muted)}.authbox input{width:100%;margin:8px 0}.row{display:flex;gap:8px}.row>*{flex:1}.network-value{font-size:21px;font-weight:900;color:#fff}.small{color:var(--muted);font-size:12px}.channel-list{display:grid;gap:7px;margin:10px 0}.channel-item{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line2);border-radius:8px;background:#111c2b}.channel-item span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.tgk-slot{border:2px solid var(--line2);border-radius:10px;padding:10px;margin:9px 0;background:#101a29}.tgk-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}.tgk-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px}.tgk-slot input{width:100%}.hidden{display:none!important}
+@media(max-width:1050px){.controls{grid-template-columns:1fr 1fr 1fr}.main{grid-template-columns:1fr}.side{display:block;border-left:0;border-top:2px solid var(--line2);max-height:48vh}.event{grid-template-columns:90px 58px 105px 1fr}.event .account{display:none}.details{grid-column:4}}
+@media(max-width:620px){.controls{grid-template-columns:1fr 1fr}.top,.terminal,.controls{padding-left:10px;padding-right:10px}.event{grid-template-columns:78px 54px 1fr}.event .category{display:none}.details{grid-column:3}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="auth" class="auth"><form id="authForm" class="authbox"><h1>Bridge Console 2.2.0</h1><p>Введите <code>PANEL_TOKEN</code>. Пароль хранится только в этой вкладке браузера.</p><input id="token" type="password" autocomplete="current-password" placeholder="PANEL_TOKEN" required><button class="primary" type="submit">Подключиться</button><p id="authError" style="color:var(--bad);font-weight:700"></p></form></div>
+<div class="app">
+<header class="top"><div><div class="logo">Bridge Console</div><div class="version">Telegram ↔ MAX · живой прогресс · каналы · скорость</div></div><div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Отключено</span></div></header>
+<section class="controls">
+<input id="search" aria-label="Поиск" placeholder="Поиск по сообщениям и деталям">
+<select id="level" aria-label="Уровень"><option value="">Все уровни</option><option value="debug">DEBUG</option><option value="info">INFO</option><option value="warn">WARN</option><option value="error">ERROR</option></select>
+<select id="category" aria-label="Категория"><option value="">Все категории</option></select>
+<select id="account" aria-label="Пользователь"><option value="">Все пользователи</option></select>
+<button id="pause">Пауза</button><button id="clear">Очистить экран</button><button id="export">Скачать JSONL</button>
+</section>
+<main class="main"><section id="terminal" class="terminal"><div class="empty">Подключение к журналу…</div></section><aside class="side">
+<div class="card"><h3>Состояние</h3><div id="stats" class="grid"></div></div>
+<div class="card"><h3>Сеть сервера</h3><div class="row"><div><div class="small">Входящая</div><div id="downSpeed" class="network-value">—</div></div><div><div class="small">Исходящая</div><div id="upSpeed" class="network-value">—</div></div></div><p id="networkMeta" class="small">Замер ещё не выполнен</p><button id="speedTest" class="primary" style="width:100%">Измерить скорость сейчас</button></div>
+<div class="card"><h3>Активные операции</h3><div id="operations"></div></div>
+<div class="card"><h3>TGK 1–3 · чужие публичные каналы</h3><p id="tgkStatus" class="small"></p><div id="tgkSlots"></div><div class="row"><button id="tgkOn">Включить TGK</button><button id="tgkOff" class="danger">Выключить TGK</button></div><p class="small">Вставляй обычную публичную ссылку <code>https://t.me/channel_name</code>. Добавлять бота администратором чужого канала не нужно.</p></div>
+<div class="card"><h3>Подсказка</h3><div class="small">Нажмите на строку, чтобы раскрыть JSON. В активных операциях показываются только реально выполняющиеся процессы. Завершённые операции исчезают сразу.</div></div>
+</aside></main>
+</div>
+<script>
+const $=id=>document.getElementById(id);let token=sessionStorage.getItem('bridgeConsoleToken')||'',source=null,events=[],seen=new Set(),paused=false,pending=[],lastSeq=0,statsTimer;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function api(path,options={}){const sep=path.includes('?')?'&':'?';return fetch(path+sep+'token='+encodeURIComponent(token),{...options,headers:{'content-type':'application/json',...(options.headers||{})}}).then(async r=>{if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||`HTTP ${r.status}`);return r})}
+function setOnline(ok,text){$('statusDot').classList.toggle('online',ok);$('statusText').textContent=text}
+function render(){const q=$('search').value.trim().toLowerCase(),level=$('level').value,cat=$('category').value,acc=$('account').value;const shown=events.filter(e=>(!level||e.level===level)&&(!cat||e.category===cat)&&(!acc||e.accountId===acc)&&(!q||`${e.message} ${e.event} ${JSON.stringify(e.details||{})}`.toLowerCase().includes(q))).slice(-2000);$('terminal').innerHTML=shown.length?shown.map(e=>`<article class="event" data-seq="${e.seq}"><span class="time">${new Date(e.timestamp).toLocaleTimeString('ru-RU',{hour12:false,fractionalSecondDigits:3})}</span><span class="level ${esc(e.level)}">${esc(e.level.toUpperCase())}</span><span class="category">${esc(e.category)}</span><span class="account">${esc(e.accountId||'—')}</span><span class="msg">${esc(e.message)}${e.progress!==null?` · ${Number(e.progress).toFixed(e.details?.percent!==undefined?1:0)}%`:''}</span><pre class="details">${esc(JSON.stringify(e,null,2))}</pre></article>`).join(''):'<div class="empty">Событий по выбранному фильтру нет</div>';document.querySelectorAll('.event').forEach(el=>el.onclick=()=>el.classList.toggle('open'));if(!paused)$('terminal').scrollTop=$('terminal').scrollHeight;renderOps(events)}
+function add(e){if(seen.has(e.seq))return;seen.add(e.seq);lastSeq=Math.max(lastSeq,e.seq||0);if(paused){pending.push(e);return}events.push(e);if(events.length>5000)events.splice(0,events.length-5000);updateOptions(e);render()}
+function updateOptions(e){for(const [id,value] of [['category',e.category],['account',e.accountId]]){if(!value)continue;const sel=$(id);if(![...sel.options].some(o=>o.value===value)){const o=document.createElement('option');o.value=value;o.textContent=value;sel.appendChild(o)}}}
+function renderOps(list){const map=new Map;for(const e of list){if(!e.operationId)continue;map.set(e.operationId,e)}const now=Date.now();const items=[...map.values()].filter(e=>e.status==='running'&&now-e.timestamp<30*60*1000).slice(-12).reverse();$('operations').innerHTML=items.length?items.map(e=>{const d=e.details||{};const meta=[d.percent!==undefined?`${d.percent}% этапа`:null,d.smoothedMbps?`${d.smoothedMbps} Мбит/с`:null,d.etaSeconds?`осталось ${formatSeconds(d.etaSeconds)}`:null].filter(Boolean).join(' · ');return `<div class="op"><div class="opline"><b>${esc(e.stage||e.event)}</b><span>${Math.round(e.progress??0)}%</span></div><small>${esc(e.message||e.operationId)}</small><div class="bar"><i style="width:${Math.max(0,Math.min(100,e.progress??0))}%"></i></div>${meta?`<div class="opmeta">${esc(meta)}</div>`:''}</div>`}).join(''):'<div class="small">Сейчас активных операций нет</div>'}
+function formatSeconds(sec){sec=Math.max(0,Math.round(Number(sec)||0));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}ч ${m}м`:m?`${m}м ${s}с`:`${s}с`}
+async function loadInitial(){const [er,sr,ar]=await Promise.all([api('/api/console/events?limit=1000').then(r=>r.json()),api('/api/console/stats').then(r=>r.json()),api('/api/accounts').then(r=>r.json())]);events=er.events||[];seen=new Set(events.map(e=>e.seq));events.forEach(updateOptions);lastSeq=er.lastSequence||events.at(-1)?.seq||0;for(const a of ar.accounts||[])updateOptions({accountId:a.id});showStats(sr);showNetwork(sr.network||{});await loadTgk();render()}
+function showStats(s){$('stats').innerHTML=[['Аптайм',formatSeconds(s.uptimeSeconds)],['Событий в памяти',s.inMemory],['За последний час',s.lastHour],['Ошибок за час',s.errorsLastHour],['Предупреждений',s.warningsLastHour],['Пользователей',s.accounts],['Память процесса',`${s.memoryMb} МБ`],['Режим 2 ГБ',s.largeFileMode?'да':'нет']].map(([a,b])=>`<span>${a}</span><b>${b}</b>`).join('')}
+function showNetwork(n){$('downSpeed').textContent=n.downloadMbps?`${n.downloadMbps} Мбит/с`:'—';$('upSpeed').textContent=n.uploadMbps?`${n.uploadMbps} Мбит/с`:'—';$('networkMeta').textContent=n.measuredAt?`Замер: ${new Date(n.measuredAt).toLocaleString('ru-RU')} · ${n.source||''}`:'Замер ещё не выполнен'}
+async function refreshStats(){try{const s=await api('/api/console/stats').then(r=>r.json());showStats(s);showNetwork(s.network||{});setOnline(true,'Сервер работает')}catch{setOnline(false,'Нет связи')}}
+function connect(){if(source)source.close();source=new EventSource('/api/console/stream?token='+encodeURIComponent(token)+'&after='+lastSeq);source.addEventListener('bridge-event',ev=>add(JSON.parse(ev.data)));source.addEventListener('ready',()=>setOnline(true,'Онлайн'));source.onerror=()=>setOnline(false,'Переподключение…')}
+async function loadTgk(){
+  try{
+    const s=await api('/api/tgk').then(r=>r.json());
+    const slots=(s.slots||[1,2,3].map(slot=>({slot}))).map(x=>({slot:x.slot||1,...x}));
+    $('tgkStatus').textContent=`Состояние: ${s.enabled?'включён':'выключен'}`;
+    $('tgkOn').textContent=s.enabled?'✓ TGK включён':'Включить TGK';
+    $('tgkSlots').innerHTML=slots.map(x=>`<div class="tgk-slot" data-slot="${x.slot}"><div class="tgk-head"><b>TGK ${x.slot}</b><span class="small">${x.lastError?`Ошибка: ${esc(x.lastError)}`:(x.lastSuccessAt?'работает':'не проверен')}</span></div><input id="tgkUrl${x.slot}" value="${esc(x.url||'')}" placeholder="https://t.me/channel_name" aria-label="Ссылка TGK ${x.slot}"><div class="small" style="margin-top:6px">Назначение: ${esc(x.targetMaxTitle||x.targetMaxChatId||'личный чат с MAX-ботом')}</div><div class="tgk-actions"><button class="primary" data-tgk-save="${x.slot}">Сохранить</button><button data-tgk-test="${x.slot}">Проверить</button><button data-tgk-load="${x.slot}">Последний пост</button></div><button class="danger" data-tgk-remove="${x.slot}" style="width:100%;margin-top:7px">Очистить TGK ${x.slot}</button></div>`).join('');
+    document.querySelectorAll('[data-tgk-save]').forEach(b=>b.onclick=async()=>{const slot=b.dataset.tgkSave,url=$(`tgkUrl${slot}`).value.trim();if(!url)return alert('Вставь публичную ссылку t.me');b.disabled=true;try{const r=await api(`/api/tgk/${slot}`,{method:'PUT',body:JSON.stringify({url})}).then(r=>r.json());if(!r.verified)alert('Ссылка сохранена, но сейчас не прочиталась: '+(r.error||'неизвестная ошибка'));await loadTgk()}catch(e){alert(e.message)}finally{b.disabled=false}});
+    document.querySelectorAll('[data-tgk-test]').forEach(b=>b.onclick=async()=>{const slot=b.dataset.tgkTest;b.disabled=true;try{const r=await api(`/api/tgk/${slot}/test`,{method:'POST',body:'{}'}).then(r=>r.json());alert(`TGK ${slot} работает. Найдено публикаций: ${r.posts}. Последний ID: ${r.latestPostId}`);await loadTgk()}catch(e){alert(e.message)}finally{b.disabled=false}});
+    document.querySelectorAll('[data-tgk-load]').forEach(b=>b.onclick=async()=>{const slot=b.dataset.tgkLoad;b.disabled=true;try{const r=await api(`/api/tgk/${slot}/load`,{method:'POST',body:JSON.stringify({count:1})}).then(r=>r.json());alert(`TGK ${slot}: передано ${r.loaded}`);await loadTgk()}catch(e){alert(e.message)}finally{b.disabled=false}});
+    document.querySelectorAll('[data-tgk-remove]').forEach(b=>b.onclick=async()=>{const slot=b.dataset.tgkRemove;if(!confirm(`Очистить TGK ${slot}?`))return;await api(`/api/tgk/${slot}`,{method:'DELETE'});await loadTgk()});
+  }catch(e){$('tgkSlots').innerHTML=`<div style="color:var(--bad)">${esc(e.message)}</div>`}
+}
+
+async function login(){try{await loadInitial();$('auth').classList.add('hidden');sessionStorage.setItem('bridgeConsoleToken',token);connect();clearInterval(statsTimer);statsTimer=setInterval(refreshStats,4000)}catch(e){$('authError').textContent=e.message;sessionStorage.removeItem('bridgeConsoleToken')}}
+$('authForm').onsubmit=e=>{e.preventDefault();token=$('token').value;login()};$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?`Продолжить (${pending.length})`:'Пауза';if(!paused){events.push(...pending);pending=[];render()}};$('clear').onclick=()=>{events=[];seen=new Set();render()};$('export').onclick=()=>location.href='/api/console/export?token='+encodeURIComponent(token);['search','level','category','account'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+$('speedTest').onclick=async()=>{const b=$('speedTest');b.disabled=true;b.textContent='Измерение…';try{const r=await api('/api/console/network/test',{method:'POST',body:'{}'}).then(r=>r.json());showNetwork(r.network||{})}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent='Измерить скорость сейчас'}};
+$('tgkOn').onclick=async()=>{await api('/api/tgk/state',{method:'POST',body:JSON.stringify({enabled:true})});await loadTgk()};$('tgkOff').onclick=async()=>{await api('/api/tgk/state',{method:'POST',body:JSON.stringify({enabled:false})});await loadTgk()};
+if(token){$('token').value=token;login()}
+</script>
+</body></html>

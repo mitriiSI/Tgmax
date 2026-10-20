@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+data/
+node_modules/
+npm-debug.log*
+.test-tmp/
+*.tmp
+*.session
+*.session-journal
+*.sqlite
+*.sqlite3
+*.db
+*.log
+certs/max-ca.pem
+__import__/

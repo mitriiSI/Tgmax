@@ -1,0 +1,16 @@
+TELEGRAM ↔ MAX BRIDGE 2.1.2 — ОБНОВЛЕНИЕ
+
+1. Остановить:
+docker compose -f .\compose.yaml -f .\compose.large-files.yaml down
+
+2. Сохранить .env и data.
+3. Распаковать архив поверх текущей папки.
+4. Запустить:
+.\large-files-start.cmd
+
+5. В основном Telegram-боте:
+/tgk 1 https://t.me/channel_name
+/tgk 1 test
+/tgk 1 load 1
+
+Отдельный бот и администраторские права в чужом канале не нужны.
